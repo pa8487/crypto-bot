@@ -1,6 +1,6 @@
 import { CryptoAsset } from '../enums';
 import { Kline } from '../interfaces';
-import { KlineInterval, KlineSymbol } from '../types';
+import { CreateOrderData, KlineInterval, KlineSymbol, Order } from '../types';
 
 export abstract class ExchangeClient {
   protected readonly apiKey: string;
@@ -22,4 +22,6 @@ export abstract class ExchangeClient {
     interval: KlineInterval;
     limit: number;
   }): Promise<Kline[]>;
+
+  public abstract placeOrder(orderData: CreateOrderData): Promise<Order>;
 }

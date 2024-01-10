@@ -1,3 +1,5 @@
+import { KlineSymbol } from '../types';
+
 export interface Kline {
   open: number;
   high: number;
@@ -9,4 +11,8 @@ export interface Kline {
 export interface ExchangeConfig {
   baseUrl: string;
   endpoints: Record<string, string>;
+}
+
+export interface OrderDetails {
+  symbol: KlineSymbol;
 }

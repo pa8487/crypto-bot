@@ -6,7 +6,12 @@ import { ExchangeConfig, Kline } from '../interfaces';
 import { ExchangeClient } from './ExchangeClient';
 import { getExchangeConfig } from '../config';
 import { ApiRequest, ApiResponse, KlineResponse } from '../types/binance';
-import { AccountResponse, Balance } from '../interfaces/binance';
+import {
+  AccountResponse,
+  Balance,
+  BinanceCreateOrderRequest,
+  BinanceCreateOrderResponse
+} from '../interfaces/binance';
 import { BinanceKlineInterval, BinanceKlineSymbol } from '../enums/binance';
 
 export class BinanceExchangeClient extends ExchangeClient {
@@ -68,6 +73,17 @@ export class BinanceExchangeClient extends ExchangeClient {
     return parsedKlines;
   }
 
+  public async placeOrder(
+    orderData: BinanceCreateOrderRequest
+  ): Promise<BinanceCreateOrderResponse> {
+    const orderResponse = (await this.privateApiRequest({
+      params: orderData,
+      endpoint: this.config.endpoints['order'],
+      method: ApiRequestMethod.POST
+    })) as BinanceCreateOrderResponse;
+    return orderResponse;
+  }
+
   private async privateApiRequest({
     params,
     endpoint,
@@ -89,7 +105,7 @@ export class BinanceExchangeClient extends ExchangeClient {
       return response.data;
     } catch (error: any) {
       console.log(`Error calling API: ${error.message}`);
-      return error;
+      throw error;
     }
   }
 
@@ -112,7 +128,7 @@ export class BinanceExchangeClient extends ExchangeClient {
       return response.data;
     } catch (error: any) {
       console.log(`Error calling API: ${error.message}`);
-      return error;
+      throw error;
     }
   }
 

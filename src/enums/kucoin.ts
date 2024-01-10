@@ -15,3 +15,15 @@ export enum KuCoinKlineInterval {
   _30m = '30min',
   _1h = '1hour'
 }
+
+export enum KuCoinOrderSide {
+  BUY = 'buy',
+  SELL = 'sell'
+}
+
+export enum KuCoinOrderType {
+  LIMIT = 'limit',
+  MARKET = 'market',
+  STOP_LIMIT = 'stop_limit',
+  STOP_MARKET = 'stop_market'
+}

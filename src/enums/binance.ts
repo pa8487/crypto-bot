@@ -15,3 +15,29 @@ export enum BinanceKlineInterval {
   _30m = '30m',
   _1h = '1h'
 }
+
+export enum BinanceOrderSide {
+  BUY = 'BUY',
+  SELL = 'SELL'
+}
+
+export enum BinanceOrderType {
+  LIMIT = 'LIMIT',
+  MARKET = 'MARKET',
+  STOP_LOSS_LIMIT = 'STOP_LOSS_LIMIT',
+  TAKE_PROFIT_LIMIT = 'TAKE_PROFIT_LIMIT',
+  LIMIT_MAKER = 'LIMIT_MAKER'
+}
+
+export enum BinanceSelfTradePreventionMode {
+  EXPIRE_TAKER = 'EXPIRE_TAKER',
+  EXPIRE_MAKER = 'EXPIRE_MAKER',
+  EXPIRE_BOTH = 'EXPIRE_BOTH',
+  NONE = 'NONE'
+}
+
+export enum BinanceNewOrderRespType {
+  ACK = 'ACK',
+  RESULT = 'RESULT',
+  FULL = 'FULL'
+}
