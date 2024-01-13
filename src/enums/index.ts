@@ -1,6 +1,3 @@
-import { BinanceKlineSymbol } from './binance';
-import { KuCoinKlineSymbol } from './kucoin';
-
 export enum CryptoAsset {
   USDT = 'USDT',
   BTC = 'BTC',
@@ -19,4 +16,13 @@ export enum ApiRequestMethod {
 export enum Exchange {
   BINANCE = 'BINANCE',
   KUCOIN = 'KUCOIN'
+}
+
+export enum OrderSide {
+  BUY = 'BUY',
+  SELL = 'SELL'
+}
+
+export enum TradingStrategyEnum {
+  EMABBANDSRSI = 'EMABBANDSRSI'
 }

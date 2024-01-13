@@ -2,7 +2,7 @@ import axios, { AxiosRequestConfig } from 'axios';
 import { createHmac } from 'crypto';
 import { URLSearchParams } from 'url';
 import { ApiRequestMethod, CryptoAsset, Exchange } from '../enums';
-import { ExchangeConfig, Kline } from '../interfaces';
+import { CreateOrderRequest, ExchangeConfig, Kline } from '../interfaces';
 import { ExchangeClient } from './ExchangeClient';
 import { getExchangeConfig } from '../config';
 import { ApiRequest, ApiResponse, KlineResponse } from '../types/binance';
@@ -10,9 +10,16 @@ import {
   AccountResponse,
   Balance,
   BinanceCreateOrderRequest,
-  BinanceCreateOrderResponse
+  BinanceCreateOrderResponse,
+  TickerResponse
 } from '../interfaces/binance';
-import { BinanceKlineInterval, BinanceKlineSymbol } from '../enums/binance';
+import {
+  BinanceKlineInterval,
+  BinanceKlineSymbol,
+  BinanceOrderSide,
+  BinanceOrderType
+} from '../enums/binance';
+import { KlineSymbol } from '../types';
 
 export class BinanceExchangeClient extends ExchangeClient {
   private readonly config: ExchangeConfig;
@@ -46,14 +53,15 @@ export class BinanceExchangeClient extends ExchangeClient {
   }
 
   public async getKlines({
-    symbol,
+    asset,
     interval,
     limit
   }: {
-    symbol: BinanceKlineSymbol;
+    asset: CryptoAsset;
     interval: BinanceKlineInterval;
     limit: number;
   }): Promise<Kline[]> {
+    const symbol = this.getSymbolUsdt(asset);
     const klines = (await this.publicApiRequest({
       params: { symbol, interval, limit },
       endpoint: this.config.endpoints['klines'],
@@ -73,15 +81,35 @@ export class BinanceExchangeClient extends ExchangeClient {
     return parsedKlines;
   }
 
+  public async getTicker(asset: CryptoAsset): Promise<number> {
+    const symbol = this.getSymbolUsdt(asset);
+    const ticker = (await this.publicApiRequest({
+      params: { symbol },
+      method: ApiRequestMethod.GET,
+      endpoint: this.config.endpoints['ticker']
+    })) as TickerResponse;
+    return +ticker.price;
+  }
+
   public async placeOrder(
-    orderData: BinanceCreateOrderRequest
+    createOrderRequest: CreateOrderRequest
   ): Promise<BinanceCreateOrderResponse> {
+    const binanceCreateOrderRequest: BinanceCreateOrderRequest = {
+      symbol: this.getSymbolUsdt(createOrderRequest.asset),
+      side: BinanceOrderSide[createOrderRequest.side],
+      type: BinanceOrderType.MARKET,
+      quoteOrderQty: createOrderRequest.quantity
+    };
     const orderResponse = (await this.privateApiRequest({
-      params: orderData,
+      params: binanceCreateOrderRequest,
       endpoint: this.config.endpoints['order'],
       method: ApiRequestMethod.POST
     })) as BinanceCreateOrderResponse;
     return orderResponse;
+  }
+
+  public getSymbolUsdt(asset: CryptoAsset): BinanceKlineSymbol {
+    return BinanceKlineSymbol[asset + CryptoAsset.USDT];
   }
 
   private async privateApiRequest({

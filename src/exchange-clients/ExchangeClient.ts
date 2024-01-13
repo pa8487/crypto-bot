@@ -1,6 +1,6 @@
 import { CryptoAsset } from '../enums';
-import { Kline } from '../interfaces';
-import { CreateOrderData, KlineInterval, KlineSymbol, Order } from '../types';
+import { Kline, CreateOrderRequest } from '../interfaces';
+import { CreateOrderResponse, KlineInterval, KlineSymbol } from '../types';
 
 export abstract class ExchangeClient {
   protected readonly apiKey: string;
@@ -14,14 +14,20 @@ export abstract class ExchangeClient {
   public abstract getAvailableAssetAmount(asset: CryptoAsset): Promise<number>;
 
   public abstract getKlines({
-    symbol,
+    asset,
     interval,
     limit
   }: {
-    symbol: KlineSymbol;
+    asset: CryptoAsset;
     interval: KlineInterval;
     limit: number;
   }): Promise<Kline[]>;
 
-  public abstract placeOrder(orderData: CreateOrderData): Promise<Order>;
+  public abstract getTicker(asset: CryptoAsset): Promise<number>;
+
+  public abstract placeOrder(
+    orderData: CreateOrderRequest
+  ): Promise<CreateOrderResponse>;
+
+  public abstract getSymbolUsdt(asset: CryptoAsset): KlineSymbol;
 }

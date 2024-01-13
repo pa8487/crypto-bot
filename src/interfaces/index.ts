@@ -1,4 +1,4 @@
-import { KlineSymbol } from '../types';
+import { CryptoAsset, OrderSide } from '../enums';
 
 export interface Kline {
   open: number;
@@ -13,6 +13,9 @@ export interface ExchangeConfig {
   endpoints: Record<string, string>;
 }
 
-export interface OrderDetails {
-  symbol: KlineSymbol;
+export interface CreateOrderRequest {
+  asset: CryptoAsset;
+  side: OrderSide;
+  quantity?: number;
+  price?: number;
 }

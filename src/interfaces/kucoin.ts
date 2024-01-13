@@ -1,2 +1,3 @@
-export interface KuCoinCreateOrderRequest {}
-export interface KuCoinCreateOrderResponse {}
+export interface KuCoinCreateOrderResponse {
+  orderId: string;
+}

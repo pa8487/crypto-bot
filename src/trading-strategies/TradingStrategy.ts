@@ -4,48 +4,38 @@ import { KlineInterval, KlineSymbol } from '../types';
 
 export abstract class TradingStrategy {
   protected readonly riskPerTrade: number;
-  protected readonly maxDrawdownLimit: number;
   protected readonly exchangeClient: ExchangeClient;
-  protected readonly symbol: KlineSymbol;
+  protected readonly asset: CryptoAsset;
   protected readonly interval: KlineInterval;
+  protected readonly takeProfitPercentage: number;
+  protected readonly stopLossPercentage: number;
 
-  protected constructor({
+  constructor({
     riskPerTrade,
-    maxDrawdownLimit,
     exchangeClient,
-    symbol,
-    interval
+    asset,
+    interval,
+    takeProfitPercentage,
+    stopLossPercentage
   }: {
     riskPerTrade: number;
-    maxDrawdownLimit: number;
     exchangeClient: ExchangeClient;
-    symbol: KlineSymbol;
+    asset: CryptoAsset;
     interval: KlineInterval;
+    takeProfitPercentage: number;
+    stopLossPercentage: number;
   }) {
     this.riskPerTrade = riskPerTrade;
-    this.maxDrawdownLimit = maxDrawdownLimit;
     this.exchangeClient = exchangeClient;
-    this.symbol = symbol;
+    this.asset = asset;
     this.interval = interval;
+    this.takeProfitPercentage = takeProfitPercentage;
+    this.stopLossPercentage = stopLossPercentage;
   }
 
   public abstract startTrading(): Promise<void>;
 
   public pauseTrading(interval: number): Promise<any> {
-    console.log(
-      `Max Drawdown limit of ${this.maxDrawdownLimit} has reached, trading paused for ${interval} milliseconds`
-    );
     return new Promise((res) => setTimeout(res, interval));
-  }
-
-  public isDrawdownLimitReached({
-    currentAmount,
-    peakAmount
-  }: {
-    currentAmount: number;
-    peakAmount: number;
-  }): boolean {
-    const drawdown = (peakAmount - currentAmount) / peakAmount;
-    return drawdown >= this.maxDrawdownLimit;
   }
 }

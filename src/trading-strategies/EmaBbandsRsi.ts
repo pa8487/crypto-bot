@@ -1,4 +1,4 @@
-import { CryptoAsset } from '../enums';
+import { CryptoAsset, OrderSide } from '../enums';
 import { Kline } from '../interfaces';
 import { BollingerBands } from '../trading-indicators/BollingerBands';
 import { ExponentialMovingAverage } from '../trading-indicators/ExponentialMovingAverage';
@@ -14,7 +14,9 @@ export class EmaBbandRsi extends TradingStrategy {
   };
 
   public async startTrading(): Promise<void> {
-    let peakUsdtAmount = 0;
+    let takeProfitPrice = 0.0;
+    let stopLossPrice = 0.0;
+
     const emaHelper = new ExponentialMovingAverage(
       this.technicalIndicatorParams.emaPeriod
     );
@@ -28,23 +30,8 @@ export class EmaBbandRsi extends TradingStrategy {
 
     while (true) {
       try {
-        const currentUsdtAmount =
-          await this.exchangeClient.getAvailableAssetAmount(CryptoAsset.BTC);
-        if (currentUsdtAmount > peakUsdtAmount) {
-          peakUsdtAmount = currentUsdtAmount;
-        }
-
-        if (
-          this.isDrawdownLimitReached({
-            currentAmount: currentUsdtAmount,
-            peakAmount: peakUsdtAmount
-          })
-        ) {
-          await this.pauseTrading(60 * 60 * 1000);
-        }
-
         const klines = await this.exchangeClient.getKlines({
-          symbol: this.symbol,
+          asset: this.asset,
           interval: this.interval,
           limit: 40
         });
@@ -53,24 +40,94 @@ export class EmaBbandRsi extends TradingStrategy {
         const emaValues = emaHelper.calculateEMA(closePrices);
         const rsiValues = rsiHelper.calculateRSI(closePrices);
         const bbands = bbandsHelper.calculateBollingerBands(closePrices);
+        const currentPrice = await this.exchangeClient.getTicker(this.asset);
 
         if (
-          closePrices[-1] <= bbands.lower[-1] &&
+          currentPrice <= bbands.lower[-1] &&
           rsiValues[-1] <= 30 &&
-          closePrices[-1] >= emaValues[-1]
+          currentPrice >= emaValues[-1]
         ) {
           console.log(
-            `Buy Signal. Close Price: ${closePrices[-1]}, EMA: ${
+            `Buy Signal. Current Price: ${currentPrice}, EMA: ${
               emaValues[-1]
             }, BBAND Lower: ${bbands.lower[-1]}, RSI: ${rsiValues[-1]}`
           );
 
-          const tradeAmountInUsdt = this.riskPerTrade * currentUsdtAmount;
-          const buyOrder = await this.exchangeClient.placeOrder({
-            symbol: this.symbol
-          });
+          try {
+            const buyOrder = await this.exchangeClient.placeOrder({
+              asset: this.asset,
+              side: OrderSide.BUY,
+              quantity: this.riskPerTrade
+            });
+            console.log(JSON.stringify(buyOrder));
+
+            takeProfitPrice =
+              (1 + this.takeProfitPercentage / 100) * currentPrice;
+            stopLossPrice = (1 - this.stopLossPercentage / 100) * currentPrice;
+          } catch (error: any) {
+            console.log(`Error creating buy order: ${error.message}`);
+          }
+        } else if (
+          currentPrice >= bbands.upper[-1] &&
+          rsiValues[-1] >= 70 &&
+          currentPrice <= emaValues[-1]
+        ) {
+          console.log(
+            `Sell Signal. Current Price: ${currentPrice}, EMA: ${
+              emaValues[-1]
+            }, BBAND Upper: ${bbands.upper[-1]}, RSI: ${rsiValues[-1]}`
+          );
+
+          try {
+            const sellOrder = await this.exchangeClient.placeOrder({
+              asset: this.asset,
+              side: OrderSide.SELL,
+              quantity: this.riskPerTrade
+            });
+            console.log(JSON.stringify(sellOrder));
+          } catch (error: any) {
+            console.log(`Error creating sell order: ${error.message}`);
+          }
+        } else if (takeProfitPrice > 0 && currentPrice >= takeProfitPrice) {
+          console.log(
+            `Take Profit price reached. Current Price: ${currentPrice}, Take Profit Price: ${takeProfitPrice}`
+          );
+
+          try {
+            const sellOrder = await this.exchangeClient.placeOrder({
+              asset: this.asset,
+              side: OrderSide.SELL,
+              quantity: this.riskPerTrade
+            });
+            console.log(JSON.stringify(sellOrder));
+            takeProfitPrice = 0;
+            stopLossPrice = 0;
+          } catch (error: any) {
+            console.log(`Error creating sell order: ${error.message}`);
+          }
+        } else if (stopLossPrice > 0 && currentPrice <= stopLossPrice) {
+          console.log(
+            `Stop Loss price reached. Current Price: ${currentPrice}, Stop Loss Price: ${stopLossPrice}`
+          );
+
+          try {
+            const sellOrder = await this.exchangeClient.placeOrder({
+              asset: this.asset,
+              side: OrderSide.SELL,
+              quantity: this.riskPerTrade
+            });
+            console.log(JSON.stringify(sellOrder));
+            takeProfitPrice = 0;
+            stopLossPrice = 0;
+          } catch (error: any) {
+            console.log(`Error creating sell order: ${error.message}`);
+          }
         }
-      } catch (error: any) {}
+      } catch (error: any) {
+        console.log(`Error occured during trading: ${error.message}`);
+      }
+
+      await this.pauseTrading(30000);
     }
   }
 }

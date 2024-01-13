@@ -7,6 +7,7 @@ import {
   BinanceOrderType,
   BinanceSelfTradePreventionMode
 } from '../enums/binance';
+import { KlineSymbol } from '../types';
 
 export interface AccountRequest {
   timestamp: number;
@@ -89,4 +90,13 @@ export interface BinanceCreateOrderResponse {
   workingTime?: number;
   selfTradePreventionMode?: BinanceSelfTradePreventionMode;
   fills?: OrderFill[];
+}
+
+export interface TickerRequest {
+  symbol: KlineSymbol;
+}
+
+export interface TickerResponse {
+  symbol: KlineSymbol;
+  price: string;
 }
