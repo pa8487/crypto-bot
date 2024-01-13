@@ -33,7 +33,7 @@ export class TradingStrategyFactory {
           asset
         });
       default:
-        throw new Error('Unsupported Trading Strategy');
+        throw new Error(`Unsupported Trading Strategy: ${tradingStrategy}`);
     }
   }
 }

@@ -7,7 +7,8 @@ import { TradingStrategy } from './TradingStrategy';
 
 export class EmaBbandRsi extends TradingStrategy {
   private readonly technicalIndicatorParams = {
-    emaPeriod: 10,
+    emaShortPeriod: 9,
+    emaLongPeriod: 21,
     rsiPeriod: 14,
     bbandsPeriod: 20,
     bbandsStdDevFactor: 2
@@ -17,8 +18,11 @@ export class EmaBbandRsi extends TradingStrategy {
     let takeProfitPrice = 0.0;
     let stopLossPrice = 0.0;
 
-    const emaHelper = new ExponentialMovingAverage(
-      this.technicalIndicatorParams.emaPeriod
+    const emaShortHelper = new ExponentialMovingAverage(
+      this.technicalIndicatorParams.emaShortPeriod
+    );
+    const emaLongHelper = new ExponentialMovingAverage(
+      this.technicalIndicatorParams.emaLongPeriod
     );
     const rsiHelper = new RelativeStrengthIndex(
       this.technicalIndicatorParams.rsiPeriod
@@ -37,20 +41,33 @@ export class EmaBbandRsi extends TradingStrategy {
         });
 
         const closePrices = klines.map((kline: Kline) => kline.close);
-        const emaValues = emaHelper.calculateEMA(closePrices);
+        const emaShort = emaShortHelper.calculateEMA(closePrices);
+        const emaLong = emaLongHelper.calculateEMA(closePrices);
         const rsiValues = rsiHelper.calculateRSI(closePrices);
         const bbands = bbandsHelper.calculateBollingerBands(closePrices);
         const currentPrice = await this.exchangeClient.getTicker(this.asset);
 
+        console.log(
+          `CurrentPrice: ${currentPrice}, EMA Short: ${
+            emaShort[emaShort.length - 1]
+          }, EMA Long: ${emaLong[emaLong.length - 1]}, RSI: ${
+            rsiValues[rsiValues.length - 1]
+          }, BBAND Lower: ${
+            bbands.lower[bbands.lower.length - 1]
+          }, BBAND Upper: ${bbands.upper[bbands.upper.length - 1]}`
+        );
+
         if (
-          currentPrice <= bbands.lower[-1] &&
-          rsiValues[-1] <= 30 &&
-          currentPrice >= emaValues[-1]
+          currentPrice <= bbands.lower[bbands.lower.length - 1] &&
+          rsiValues[rsiValues.length - 1] <= 30 &&
+          emaShort[emaShort.length - 1] >= emaLong[emaLong.length - 1]
         ) {
           console.log(
-            `Buy Signal. Current Price: ${currentPrice}, EMA: ${
-              emaValues[-1]
-            }, BBAND Lower: ${bbands.lower[-1]}, RSI: ${rsiValues[-1]}`
+            `Buy Signal. Current Price: ${currentPrice}, EMA Short: ${
+              emaShort[emaShort.length - 1]
+            }, EMA Long: ${emaLong[emaLong.length - 1]}, BBAND Lower: ${
+              bbands.lower[bbands.lower.length - 1]
+            }, RSI: ${rsiValues[rsiValues.length - 1]}`
           );
 
           try {
@@ -68,14 +85,16 @@ export class EmaBbandRsi extends TradingStrategy {
             console.log(`Error creating buy order: ${error.message}`);
           }
         } else if (
-          currentPrice >= bbands.upper[-1] &&
-          rsiValues[-1] >= 70 &&
-          currentPrice <= emaValues[-1]
+          currentPrice >= bbands.upper[bbands.upper.length - 1] &&
+          rsiValues[rsiValues.length - 1] >= 70 &&
+          emaShort[emaShort.length - 1] <= emaLong[emaLong.length - 1]
         ) {
           console.log(
-            `Sell Signal. Current Price: ${currentPrice}, EMA: ${
-              emaValues[-1]
-            }, BBAND Upper: ${bbands.upper[-1]}, RSI: ${rsiValues[-1]}`
+            `Sell Signal. Current Price: ${currentPrice}, EMA Short: ${
+              emaShort[emaShort.length - 1]
+            }, EMA Long: ${emaLong[emaLong.length - 1]} BBAND Upper: ${
+              bbands.upper[bbands.upper.length - 1]
+            }, RSI: ${rsiValues[rsiValues.length - 1]}`
           );
 
           try {
@@ -127,6 +146,7 @@ export class EmaBbandRsi extends TradingStrategy {
         console.log(`Error occured during trading: ${error.message}`);
       }
 
+      console.log();
       await this.pauseTrading(30000);
     }
   }

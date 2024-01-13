@@ -13,7 +13,7 @@ export class ExchangeFactory {
       case Exchange.BINANCE:
         return new BinanceExchangeClient({ apiKey, apiSecret, isTestMode });
       default:
-        throw new Error('Unsupported exchange');
+        throw new Error(`Unsupported exchange: ${exchange}`);
     }
   }
 }
