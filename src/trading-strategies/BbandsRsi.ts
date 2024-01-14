@@ -28,12 +28,11 @@ export class BbandRsi extends TradingStrategy {
       await this.exchangeClient.getAvailableAssetAmount(CryptoAsset.USDT);
     console.log(`Starting USDT Balance: ${startingUsdtBalance}`);
 
-    const assetBalance = await this.exchangeClient.getAvailableAssetAmount(
-      this.asset
-    );
-    console.log(`Starting ${this.asset} balance: ${assetBalance}`);
-
-    if (assetBalance > 0) {
+    try {
+      const assetBalance = await this.exchangeClient.getAvailableAssetAmount(
+        this.asset
+      );
+      console.log(`Starting ${this.asset} balance: ${assetBalance}`);
       console.log(`Selling all available asset balance`);
       const sellOrder = await this.exchangeClient.placeOrder({
         asset: this.asset,
@@ -41,6 +40,8 @@ export class BbandRsi extends TradingStrategy {
         side: OrderSide.SELL
       });
       console.log(JSON.stringify(sellOrder));
+    } catch (errro: any) {
+      console.log(`Error selling asset: ${JSON.stringify(errro)}`);
     }
 
     while (true) {

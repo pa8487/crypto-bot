@@ -94,6 +94,9 @@ export class BinanceExchangeClient extends ExchangeClient {
   public async placeOrder(
     createOrderRequest: CreateOrderRequest
   ): Promise<BinanceCreateOrderResponse> {
+    if (!createOrderRequest.quantity || createOrderRequest.quantity <= 0) {
+      throw new Error(`Invalid quantity: ${createOrderRequest.quantity}`);
+    }
     const binanceCreateOrderRequest: BinanceCreateOrderRequest = {
       symbol: this.getSymbolUsdt(createOrderRequest.asset),
       side: BinanceOrderSide[createOrderRequest.side],
