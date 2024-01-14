@@ -41,9 +41,13 @@ export class BollingerBands {
     }
 
     return {
-      upper: this.upperBandValues,
-      middle: this.smaValues,
-      lower: this.lowerBandValues
+      upper: this.upperBandValues.map(
+        (value) => +value.toFixed(value < 1 ? 8 : 2)
+      ),
+      middle: this.smaValues.map((value) => +value.toFixed(value < 1 ? 8 : 2)),
+      lower: this.lowerBandValues.map(
+        (value) => +value.toFixed(value < 1 ? 8 : 2)
+      )
     };
   }
 

@@ -24,5 +24,5 @@ export enum OrderSide {
 }
 
 export enum TradingStrategyEnum {
-  EMABBANDSRSI = 'EMABBANDSRSI'
+  BBANDSRSI = 'BBANDSRSI'
 }

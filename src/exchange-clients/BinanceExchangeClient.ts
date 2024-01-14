@@ -1,7 +1,7 @@
 import axios, { AxiosRequestConfig } from 'axios';
 import { createHmac } from 'crypto';
 import { URLSearchParams } from 'url';
-import { ApiRequestMethod, CryptoAsset, Exchange } from '../enums';
+import { ApiRequestMethod, CryptoAsset, Exchange, OrderSide } from '../enums';
 import { CreateOrderRequest, ExchangeConfig, Kline } from '../interfaces';
 import { ExchangeClient } from './ExchangeClient';
 import { getExchangeConfig } from '../config';
@@ -98,8 +98,14 @@ export class BinanceExchangeClient extends ExchangeClient {
       symbol: this.getSymbolUsdt(createOrderRequest.asset),
       side: BinanceOrderSide[createOrderRequest.side],
       type: BinanceOrderType.MARKET,
-      quoteOrderQty: createOrderRequest.quantity
+      timestamp: Date.now()
     };
+    if (createOrderRequest.side === OrderSide.SELL) {
+      binanceCreateOrderRequest.quantity = createOrderRequest.quantity;
+    } else {
+      binanceCreateOrderRequest.quoteOrderQty = createOrderRequest.quantity;
+    }
+    console.log(`Order Request: ${JSON.stringify(binanceCreateOrderRequest)}`);
     const orderResponse = (await this.privateApiRequest({
       params: binanceCreateOrderRequest,
       endpoint: this.config.endpoints['order'],
@@ -132,7 +138,7 @@ export class BinanceExchangeClient extends ExchangeClient {
       const response = await axios.request(requestConfig);
       return response.data;
     } catch (error: any) {
-      console.log(`Error calling API: ${error.message}`);
+      console.log(`Error calling API: ${JSON.stringify(error)}`);
       throw error;
     }
   }
@@ -155,7 +161,7 @@ export class BinanceExchangeClient extends ExchangeClient {
       const response = await axios.request(requestConfig);
       return response.data;
     } catch (error: any) {
-      console.log(`Error calling API: ${error.message}`);
+      console.log(`Error calling API: ${JSON.stringify(error)}`);
       throw error;
     }
   }

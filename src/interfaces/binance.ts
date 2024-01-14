@@ -70,7 +70,7 @@ export interface BinanceCreateOrderRequest {
   selfTradePreventionMode?: BinanceSelfTradePreventionMode;
   newOrderRespType?: BinanceNewOrderRespType;
   recvWindow?: number;
-  timestamp?: number;
+  timestamp: number;
 }
 
 export interface BinanceCreateOrderResponse {

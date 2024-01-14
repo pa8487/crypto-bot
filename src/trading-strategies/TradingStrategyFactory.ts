@@ -1,7 +1,7 @@
 import { CryptoAsset, TradingStrategyEnum } from '../enums';
 import { ExchangeClient } from '../exchange-clients/ExchangeClient';
 import { KlineInterval } from '../types';
-import { EmaBbandRsi } from './EmaBbandsRsi';
+import { BbandRsi } from './BbandsRsi';
 import { TradingStrategy } from './TradingStrategy';
 
 export class TradingStrategyFactory {
@@ -23,8 +23,8 @@ export class TradingStrategyFactory {
     tradingStrategy: TradingStrategyEnum;
   }): TradingStrategy {
     switch (tradingStrategy) {
-      case TradingStrategyEnum.EMABBANDSRSI:
-        return new EmaBbandRsi({
+      case TradingStrategyEnum.BBANDSRSI:
+        return new BbandRsi({
           exchangeClient,
           riskPerTrade,
           takeProfitPercentage,

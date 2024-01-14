@@ -39,7 +39,7 @@ export class RelativeStrengthIndex {
       rsiValues.push(rsIndex);
     }
 
-    return rsiValues;
+    return rsiValues.map((value) => +value.toFixed(value < 1 ? 8 : 2));
   }
 
   private calculateAverage(values: number[]): number {
