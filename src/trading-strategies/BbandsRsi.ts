@@ -36,12 +36,12 @@ export class BbandRsi extends TradingStrategy {
       console.log(`Selling all available asset balance`);
       const sellOrder = await this.exchangeClient.placeOrder({
         asset: this.asset,
-        quantity: +assetBalance.toFixed(2),
+        quantity: +assetBalance.toFixed(4),
         side: OrderSide.SELL
       });
       console.log(JSON.stringify(sellOrder));
-    } catch (errro: any) {
-      console.log(`Error selling asset: ${JSON.stringify(errro)}`);
+    } catch (erorr: any) {
+      console.log(`Error selling asset: ${JSON.stringify(erorr)}`);
     }
 
     while (true) {
@@ -108,7 +108,7 @@ export class BbandRsi extends TradingStrategy {
               side: OrderSide.SELL,
               quantity: +(
                 await this.exchangeClient.getAvailableAssetAmount(this.asset)
-              ).toFixed(2)
+              ).toFixed(4)
             });
             console.log(JSON.stringify(sellOrder));
             inPosition = false;
