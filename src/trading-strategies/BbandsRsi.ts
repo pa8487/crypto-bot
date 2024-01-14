@@ -46,6 +46,10 @@ export class BbandRsi extends TradingStrategy {
 
     while (true) {
       try {
+        const assetBalance = +(
+          await this.exchangeClient.getAvailableAssetAmount(this.asset)
+        ).toFixed(4);
+
         const klines = await this.exchangeClient.getKlines({
           asset: this.asset,
           interval: this.interval,
@@ -89,7 +93,7 @@ export class BbandRsi extends TradingStrategy {
             stopLossPrice = (1 - this.stopLossPercentage / 100) * currentPrice;
             inPosition = true;
           } catch (error: any) {
-            console.log(`Error creating buy order: ${error.message}`);
+            console.log(`Error creating buy order: ${JSON.stringify(error)}`);
           }
         } else if (
           currentPrice >= bbands.upper[bbands.upper.length - 1] &&
@@ -106,14 +110,12 @@ export class BbandRsi extends TradingStrategy {
             const sellOrder = await this.exchangeClient.placeOrder({
               asset: this.asset,
               side: OrderSide.SELL,
-              quantity: +(
-                await this.exchangeClient.getAvailableAssetAmount(this.asset)
-              ).toFixed(4)
+              quantity: assetBalance
             });
             console.log(JSON.stringify(sellOrder));
             inPosition = false;
           } catch (error: any) {
-            console.log(`Error creating sell order: ${error.message}`);
+            console.log(`Error creating sell order: ${JSON.stringify(error)}`);
           }
         } else if (inPosition && currentPrice >= takeProfitPrice) {
           console.log(
@@ -124,14 +126,14 @@ export class BbandRsi extends TradingStrategy {
             const sellOrder = await this.exchangeClient.placeOrder({
               asset: this.asset,
               side: OrderSide.SELL,
-              quantity: this.riskPerTrade
+              quantity: assetBalance
             });
             console.log(JSON.stringify(sellOrder));
             takeProfitPrice = 0;
             stopLossPrice = 0;
             inPosition = false;
           } catch (error: any) {
-            console.log(`Error creating sell order: ${error.message}`);
+            console.log(`Error creating sell order: ${JSON.stringify(error)}`);
           }
         } else if (inPosition && currentPrice <= stopLossPrice) {
           console.log(
@@ -142,18 +144,18 @@ export class BbandRsi extends TradingStrategy {
             const sellOrder = await this.exchangeClient.placeOrder({
               asset: this.asset,
               side: OrderSide.SELL,
-              quantity: this.riskPerTrade
+              quantity: assetBalance
             });
             console.log(JSON.stringify(sellOrder));
             takeProfitPrice = 0;
             stopLossPrice = 0;
             inPosition = false;
           } catch (error: any) {
-            console.log(`Error creating sell order: ${error.message}`);
+            console.log(`Error creating sell order: ${JSON.stringify(error)}`);
           }
         }
       } catch (error: any) {
-        console.log(`Error occured during trading: ${error.message}`);
+        console.log(`Error occured during trading: ${JSON.stringify(error)}`);
       }
 
       const currentUsdtBalance =
