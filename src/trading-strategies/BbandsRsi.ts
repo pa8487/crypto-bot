@@ -15,6 +15,8 @@ export class BbandRsi extends TradingStrategy {
     let takeProfitPrice = 0.0;
     let stopLossPrice = 0.0;
     let inPosition = false;
+    let buyBalance = 0;
+    let sellBalance = 0;
 
     const rsiHelper = new RelativeStrengthIndex(
       this.technicalIndicatorParams.rsiPeriod
@@ -23,10 +25,6 @@ export class BbandRsi extends TradingStrategy {
       this.technicalIndicatorParams.bbandsPeriod,
       this.technicalIndicatorParams.bbandsStdDevFactor
     );
-
-    const startingUsdtBalance =
-      await this.exchangeClient.getAvailableAssetAmount(CryptoAsset.USDT);
-    console.log(`Starting USDT Balance: ${startingUsdtBalance}`);
 
     try {
       const assetBalance = await this.exchangeClient.getAvailableAssetAmount(
@@ -92,6 +90,7 @@ export class BbandRsi extends TradingStrategy {
               (1 + this.takeProfitPercentage / 100) * currentPrice;
             stopLossPrice = (1 - this.stopLossPercentage / 100) * currentPrice;
             inPosition = true;
+            buyBalance += this.riskPerTrade;
           } catch (error: any) {
             console.log(`Error creating buy order: ${JSON.stringify(error)}`);
           }
@@ -114,6 +113,7 @@ export class BbandRsi extends TradingStrategy {
             });
             console.log(JSON.stringify(sellOrder));
             inPosition = false;
+            sellBalance += assetBalance * currentPrice;
           } catch (error: any) {
             console.log(`Error creating sell order: ${JSON.stringify(error)}`);
           }
@@ -132,6 +132,7 @@ export class BbandRsi extends TradingStrategy {
             takeProfitPrice = 0;
             stopLossPrice = 0;
             inPosition = false;
+            sellBalance += assetBalance * currentPrice;
           } catch (error: any) {
             console.log(`Error creating sell order: ${JSON.stringify(error)}`);
           }
@@ -150,6 +151,7 @@ export class BbandRsi extends TradingStrategy {
             takeProfitPrice = 0;
             stopLossPrice = 0;
             inPosition = false;
+            sellBalance += assetBalance * currentPrice;
           } catch (error: any) {
             console.log(`Error creating sell order: ${JSON.stringify(error)}`);
           }
@@ -158,15 +160,13 @@ export class BbandRsi extends TradingStrategy {
         console.log(`Error occured during trading: ${JSON.stringify(error)}`);
       }
 
-      const currentUsdtBalance =
-        await this.exchangeClient.getAvailableAssetAmount(CryptoAsset.USDT);
       console.log(
-        `Current USDT Balance: ${currentUsdtBalance}. Profit: ${
-          currentUsdtBalance - startingUsdtBalance
+        `Current Buy Balance: ${buyBalance}, Sell Balance: ${sellBalance}, Profit: ${
+          sellBalance - buyBalance
         }`
       );
       console.log();
-      await this.pauseTrading(30000);
+      await this.pauseTrading(60000);
     }
   }
 }
