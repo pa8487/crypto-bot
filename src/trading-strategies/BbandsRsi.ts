@@ -46,7 +46,7 @@ export class BbandRsi extends TradingStrategy {
       try {
         const assetBalance = +(
           await this.exchangeClient.getAvailableAssetAmount(this.asset)
-        ).toFixed(4);
+        ).toFixed(8);
 
         const klines = await this.exchangeClient.getKlines({
           asset: this.asset,
