@@ -27,14 +27,14 @@ export class BbandRsi extends TradingStrategy {
     );
 
     try {
-      const assetBalance = await this.exchangeClient.getAvailableAssetAmount(
-        this.asset
-      );
+      const assetBalance = +(
+        await this.exchangeClient.getAvailableAssetAmount(this.asset)
+      ).toFixed(8);
       console.log(`Starting ${this.asset} balance: ${assetBalance}`);
       console.log(`Selling all available asset balance`);
       const sellOrder = await this.exchangeClient.placeOrder({
         asset: this.asset,
-        quantity: +assetBalance.toFixed(4),
+        quantity: assetBalance,
         side: OrderSide.SELL
       });
       console.log(JSON.stringify(sellOrder));
