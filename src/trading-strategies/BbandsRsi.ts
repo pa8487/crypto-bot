@@ -26,21 +26,7 @@ export class BbandRsi extends TradingStrategy {
       this.technicalIndicatorParams.bbandsStdDevFactor
     );
 
-    try {
-      const assetBalance = +(
-        await this.exchangeClient.getAvailableAssetAmount(this.asset)
-      ).toFixed(8);
-      console.log(`Starting ${this.asset} balance: ${assetBalance}`);
-      console.log(`Selling all available asset balance`);
-      const sellOrder = await this.exchangeClient.placeOrder({
-        asset: this.asset,
-        quantity: assetBalance,
-        side: OrderSide.SELL
-      });
-      console.log(JSON.stringify(sellOrder));
-    } catch (erorr: any) {
-      console.log(`Error selling asset: ${JSON.stringify(erorr)}`);
-    }
+    await this.sellInitialAssetBalance();
 
     while (true) {
       try {
@@ -55,8 +41,11 @@ export class BbandRsi extends TradingStrategy {
         });
 
         const closePrices = klines.map((kline: Kline) => kline.close);
+
         const rsiValues = rsiHelper.calculateRSI(closePrices);
+
         const bbands = bbandsHelper.calculateBollingerBands(closePrices);
+
         const currentPrice = await this.exchangeClient.getTicker(this.asset);
 
         console.log(
@@ -129,9 +118,11 @@ export class BbandRsi extends TradingStrategy {
               quantity: assetBalance
             });
             console.log(JSON.stringify(sellOrder));
+
             takeProfitPrice = 0;
             stopLossPrice = 0;
             inPosition = false;
+
             sellBalance += assetBalance * currentPrice;
           } catch (error: any) {
             console.log(`Error creating sell order: ${JSON.stringify(error)}`);
@@ -148,9 +139,11 @@ export class BbandRsi extends TradingStrategy {
               quantity: assetBalance
             });
             console.log(JSON.stringify(sellOrder));
+
             takeProfitPrice = 0;
             stopLossPrice = 0;
             inPosition = false;
+
             sellBalance += assetBalance * currentPrice;
           } catch (error: any) {
             console.log(`Error creating sell order: ${JSON.stringify(error)}`);
@@ -166,7 +159,7 @@ export class BbandRsi extends TradingStrategy {
         }`
       );
       console.log();
-      await this.pauseTrading(60000);
+      await this.pauseTrading(30000);
     }
   }
 }

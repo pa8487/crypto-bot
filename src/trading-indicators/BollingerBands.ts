@@ -1,17 +1,9 @@
 export class BollingerBands {
   private period: number;
-  private closePrices: number[];
-  private smaValues: number[];
-  private upperBandValues: number[];
-  private lowerBandValues: number[];
   private stdDevFactor: number;
 
   constructor(period: number, stdDevFactor: number) {
     this.period = period;
-    this.closePrices = [];
-    this.smaValues = [];
-    this.upperBandValues = [];
-    this.lowerBandValues = [];
     this.stdDevFactor = stdDevFactor;
   }
 
@@ -20,47 +12,48 @@ export class BollingerBands {
     middle: number[];
     lower: number[];
   } {
-    this.closePrices = closePrices;
+    const smaValues = [];
+    const upperBandValues = [];
+    const lowerBandValues = [];
 
     // Calculate SMA (Simple Moving Average)
-    for (let i = this.period - 1; i < this.closePrices.length; i++) {
-      const sma = this.calculateSMA(i);
-      this.smaValues.push(sma);
+    for (let i = this.period - 1; i < closePrices.length; i++) {
+      const sma = this.calculateSMA(i, closePrices);
+      smaValues.push(sma);
     }
 
     // Calculate standard deviation
-    for (let i = this.period - 1; i < this.closePrices.length; i++) {
-      const stdDev = this.calculateStandardDeviation(i);
+    for (let i = this.period - 1; i < closePrices.length; i++) {
+      const stdDev = this.calculateStandardDeviation(i, closePrices);
       const upperBand =
-        this.smaValues[i - this.period + 1] + this.stdDevFactor * stdDev;
+        smaValues[i - this.period + 1] + this.stdDevFactor * stdDev;
       const lowerBand =
-        this.smaValues[i - this.period + 1] - this.stdDevFactor * stdDev;
+        smaValues[i - this.period + 1] - this.stdDevFactor * stdDev;
 
-      this.upperBandValues.push(upperBand);
-      this.lowerBandValues.push(lowerBand);
+      upperBandValues.push(upperBand);
+      lowerBandValues.push(lowerBand);
     }
 
     return {
-      upper: this.upperBandValues.map(
-        (value) => +value.toFixed(value < 1 ? 8 : 2)
-      ),
-      middle: this.smaValues.map((value) => +value.toFixed(value < 1 ? 8 : 2)),
-      lower: this.lowerBandValues.map(
-        (value) => +value.toFixed(value < 1 ? 8 : 2)
-      )
+      upper: upperBandValues.map((value) => +value.toFixed(value < 1 ? 8 : 4)),
+      middle: smaValues.map((value) => +value.toFixed(value < 1 ? 8 : 4)),
+      lower: lowerBandValues.map((value) => +value.toFixed(value < 1 ? 8 : 4))
     };
   }
 
-  private calculateSMA(index: number): number {
-    const sum = this.closePrices
+  private calculateSMA(index: number, closePrices: number[]): number {
+    const sum = closePrices
       .slice(index - this.period + 1, index + 1)
       .reduce((acc, price) => acc + price, 0);
     return sum / this.period;
   }
 
-  private calculateStandardDeviation(index: number): number {
-    const prices = this.closePrices.slice(index - this.period + 1, index + 1);
-    const mean = this.calculateSMA(index);
+  private calculateStandardDeviation(
+    index: number,
+    closePrices: number[]
+  ): number {
+    const prices = closePrices.slice(index - this.period + 1, index + 1);
+    const mean = this.calculateSMA(index, closePrices);
     const squaredDifferences = prices.map((price) => Math.pow(price - mean, 2));
     const variance =
       squaredDifferences.reduce((acc, val) => acc + val, 0) / this.period;

@@ -1,4 +1,4 @@
-import { CryptoAsset } from '../enums';
+import { CryptoAsset, OrderSide } from '../enums';
 import { ExchangeClient } from '../exchange-clients/ExchangeClient';
 import { KlineInterval, KlineSymbol } from '../types';
 
@@ -37,5 +37,25 @@ export abstract class TradingStrategy {
 
   public pauseTrading(interval: number): Promise<any> {
     return new Promise((res) => setTimeout(res, interval));
+  }
+
+  protected async sellInitialAssetBalance() {
+    try {
+      const assetBalance = +(
+        await this.exchangeClient.getAvailableAssetAmount(this.asset)
+      ).toFixed(8);
+      console.log(`Starting ${this.asset} balance: ${assetBalance}`);
+
+      console.log(`Selling all available asset balance`);
+      const sellOrder = await this.exchangeClient.placeOrder({
+        asset: this.asset,
+        quantity: assetBalance,
+        side: OrderSide.SELL
+      });
+
+      console.log(JSON.stringify(sellOrder));
+    } catch (erorr: any) {
+      console.log(`Error selling asset: ${JSON.stringify(erorr)}`);
+    }
   }
 }
