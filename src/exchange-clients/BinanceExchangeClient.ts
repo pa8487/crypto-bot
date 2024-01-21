@@ -19,7 +19,6 @@ import {
   BinanceOrderSide,
   BinanceOrderType
 } from '../enums/binance';
-import { KlineSymbol } from '../types';
 
 export class BinanceExchangeClient extends ExchangeClient {
   private readonly config: ExchangeConfig;

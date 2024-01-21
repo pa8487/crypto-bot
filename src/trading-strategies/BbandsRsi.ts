@@ -1,5 +1,6 @@
 import { CryptoAsset, OrderSide } from '../enums';
 import { Kline } from '../interfaces';
+import { BinanceCreateOrderResponse } from '../interfaces/binance';
 import { BollingerBands } from '../trading-indicators/BollingerBands';
 import { RelativeStrengthIndex } from '../trading-indicators/RelativeStrengthIndex';
 import { TradingStrategy } from './TradingStrategy';
@@ -68,83 +69,45 @@ export class BbandRsi extends TradingStrategy {
           );
 
           try {
-            const buyOrder = await this.exchangeClient.placeOrder({
+            const buyOrder = (await this.exchangeClient.placeOrder({
               asset: this.asset,
               side: OrderSide.BUY,
               quantity: this.riskPerTrade
-            });
+            })) as BinanceCreateOrderResponse;
             console.log(JSON.stringify(buyOrder));
 
             takeProfitPrice =
               (1 + this.takeProfitPercentage / 100) * currentPrice;
             stopLossPrice = (1 - this.stopLossPercentage / 100) * currentPrice;
             inPosition = true;
-            buyBalance += this.riskPerTrade;
+
+            buyBalance += +buyOrder.cummulativeQuoteQty;
           } catch (error: any) {
             console.log(`Error creating buy order: ${JSON.stringify(error)}`);
           }
         } else if (
-          currentPrice >= bbands.upper[bbands.upper.length - 1] &&
-          rsiValues[rsiValues.length - 1] >= 70 &&
-          inPosition
+          inPosition &&
+          this.isSellSignal({
+            currentPrice,
+            takeProfitPrice,
+            stopLossPrice,
+            bbandUpper: bbands.upper[bbands.upper.length - 1],
+            rsi: rsiValues[rsiValues.length - 1]
+          })
         ) {
-          console.log(
-            `Sell Signal. Current Price: ${currentPrice}, BBAND Upper: ${
-              bbands.upper[bbands.upper.length - 1]
-            }, RSI: ${rsiValues[rsiValues.length - 1]}`
-          );
-
           try {
-            const sellOrder = await this.exchangeClient.placeOrder({
+            const sellOrder = (await this.exchangeClient.placeOrder({
               asset: this.asset,
               side: OrderSide.SELL,
               quantity: assetBalance
-            });
+            })) as BinanceCreateOrderResponse;
             console.log(JSON.stringify(sellOrder));
+
             inPosition = false;
-            sellBalance += assetBalance * currentPrice;
-          } catch (error: any) {
-            console.log(`Error creating sell order: ${JSON.stringify(error)}`);
-          }
-        } else if (inPosition && currentPrice >= takeProfitPrice) {
-          console.log(
-            `Take Profit price reached. Current Price: ${currentPrice}, Take Profit Price: ${takeProfitPrice}`
-          );
-
-          try {
-            const sellOrder = await this.exchangeClient.placeOrder({
-              asset: this.asset,
-              side: OrderSide.SELL,
-              quantity: assetBalance
-            });
-            console.log(JSON.stringify(sellOrder));
-
             takeProfitPrice = 0;
             stopLossPrice = 0;
-            inPosition = false;
 
-            sellBalance += assetBalance * currentPrice;
-          } catch (error: any) {
-            console.log(`Error creating sell order: ${JSON.stringify(error)}`);
-          }
-        } else if (inPosition && currentPrice <= stopLossPrice) {
-          console.log(
-            `Stop Loss price reached. Current Price: ${currentPrice}, Stop Loss Price: ${stopLossPrice}`
-          );
-
-          try {
-            const sellOrder = await this.exchangeClient.placeOrder({
-              asset: this.asset,
-              side: OrderSide.SELL,
-              quantity: assetBalance
-            });
-            console.log(JSON.stringify(sellOrder));
-
-            takeProfitPrice = 0;
-            stopLossPrice = 0;
-            inPosition = false;
-
-            sellBalance += assetBalance * currentPrice;
+            sellBalance += +sellOrder.cummulativeQuoteQty;
           } catch (error: any) {
             console.log(`Error creating sell order: ${JSON.stringify(error)}`);
           }
@@ -159,7 +122,48 @@ export class BbandRsi extends TradingStrategy {
         }`
       );
       console.log();
+
       await this.pauseTrading(30000);
     }
+  }
+
+  private isSellSignal({
+    currentPrice,
+    takeProfitPrice,
+    stopLossPrice,
+    bbandUpper,
+    rsi
+  }: {
+    currentPrice: number;
+    takeProfitPrice: number;
+    stopLossPrice: number;
+    bbandUpper: number;
+    rsi: number;
+  }): boolean {
+    // check takeProfitPrice reached
+    if (currentPrice >= takeProfitPrice) {
+      console.log(
+        `Take Profit price reached. Current Price: ${currentPrice}, Take Profit Price: ${takeProfitPrice}`
+      );
+      return true;
+    }
+
+    // check stopLossPrice reached
+    if (currentPrice <= stopLossPrice) {
+      console.log(
+        `Stop Loss price reached. Current Price: ${currentPrice}, Stop Loss Price: ${stopLossPrice}`
+      );
+      return true;
+    }
+
+    // check bbands and rsi conditions
+    if (bbandUpper <= currentPrice && rsi >= 70) {
+      console.log(
+        `Sell Signal. Current Price: ${currentPrice}, BBAND Upper: ${bbandUpper}, RSI: ${rsi}`
+      );
+      return true;
+    }
+
+    return false;
   }
 }
